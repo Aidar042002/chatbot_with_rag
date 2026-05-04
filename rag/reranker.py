@@ -7,7 +7,7 @@ _reranker = None
 def init_cross_encoder():
     global _reranker
     if _reranker is None:
-        _reranker =  CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        _reranker =  CrossEncoder('DiTy/cross-encoder-russian-msmarco', max_length=512)
         print("Reranker загружен")
     return _reranker
 
@@ -23,5 +23,4 @@ async def rerank_documents(query: str, docs: List[Document], top_n: int = 3) -> 
 
     top_docs = [doc for doc, _ in ranked[:top_n]]
 
-    print(f"Ретривер: {len(docs)} \n. Реранкер: {len(top_docs)}")
     return top_docs
