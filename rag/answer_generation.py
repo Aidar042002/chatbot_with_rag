@@ -28,4 +28,4 @@ def generate_answer(query: str,  context_docs: List[Document]) -> str:
     response = giga.chat(prompt)
     answer = response.choices[0].message.content
 
-    return f"{answer}"
+    return f"{answer.replace('#', '').replace('*', '')}"

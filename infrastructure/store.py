@@ -1,7 +1,6 @@
 import os
 from typing import List
-
-from langchain_community.docstore.document import Document as LangChainDocument
+from langchain_core.documents import Document as LangChainDocument
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from models.document import Document
@@ -42,10 +41,17 @@ async def create_data():
     chunks = splitter.split_documents(docs)
     print(f"Создано {len(chunks)} фрагментов")
 
-    for chunk in chunks:
+    qdrant_repo = DocumentRepository()
+
+    for i, chunk in enumerate(chunks):
         doc1 = Document(
+            pg_id=None,
+            qdrant_id=None,
             text=chunk.page_content,
-            metadata={"source": "docs", "category": "database"}
+            metadata={"source": chunk.metadata.get("source", "unknown")}
         )
-        created = await DocumentRepository.create(doc1)
-        print(f"Создан документ ID: {created.id}")
+
+        created = await qdrant_repo.create(doc1)
+        print(f"  Текст: {created}...")
+
+    print(f"Всего сохранено {len(chunks)} фрагментов в Qdrant")

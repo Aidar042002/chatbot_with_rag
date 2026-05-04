@@ -4,13 +4,13 @@ import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 
 from config.settings import VK_TOKEN
-from infrastructure.database import db
 from infrastructure.store import create_data
 from rag.pipeline import rag_pipeline
 from rag.reranker import init_cross_encoder
+from infrastructure.qdrant_storage import init_qdrant
 
 async def init_data():
-    await db.connect("postgresql://postgres:root@localhost/postgres")
+    init_qdrant()
     init_cross_encoder()
     # await create_data()
     print("Данные в бд загружены")
@@ -28,6 +28,8 @@ async def chat_loop():
     vk = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
 
+    greeted = set()
+
     print("Бот готов.")
 
     for event in longpoll.listen():
@@ -37,6 +39,14 @@ async def chat_loop():
 
             if not query:
                 continue
+
+            if user_id not in greeted:
+                greeted.add(user_id)
+                send_message(user_id, "Привет! Я бот для консультирования. Задай вопрос или напиши /help", vk)
+
+                if query == "/help":
+                    send_message(user_id, "Просто задай свой вопрос о поступлении", vk)
+                    continue
 
             print(f"\nВопрос: {query}")
 
