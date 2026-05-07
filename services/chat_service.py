@@ -28,7 +28,6 @@ async def chat_loop():
     vk = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
 
-    greeted = set()
 
     print("Бот готов.")
 
@@ -40,15 +39,9 @@ async def chat_loop():
             if not query:
                 continue
 
-            if user_id not in greeted:
-                greeted.add(user_id)
-                send_message(user_id, "Привет! Я бот для консультирования. Задай вопрос или напиши /help", vk)
-
-                if query == "/help":
-                    send_message(user_id, "Просто задай свой вопрос о поступлении", vk)
-                    continue
-
             print(f"\nВопрос: {query}")
+
+            send_message(user_id, "Готовится ответ...", vk)
 
             answer = await rag_pipeline(str(query))
 

@@ -16,7 +16,7 @@ async def rerank_documents(query: str, docs: List[Document], top_n: int = 3) -> 
     if not docs:
         return []
 
-    pairs = [(query, doc.text[:500]) for doc in docs]
+    pairs = [(query, doc.text) for doc in docs]
     scores = _reranker.predict(pairs)
 
     ranked = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)
