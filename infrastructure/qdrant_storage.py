@@ -1,5 +1,5 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance
+from qdrant_client import models
 
 _client, _collection_name = None, None
 
@@ -20,10 +20,22 @@ def init_qdrant():
     if collection_name not in collection_names:
         client.create_collection(
             collection_name=collection_name,
-            vectors_config=VectorParams(
-                size=384,
-                distance=Distance.COSINE
-            )
+            vectors_config={
+                "dense": models.VectorParams(
+                    distance=models.Distance.COSINE,
+                    size=384,
+                    hnsw_config=models.HnswConfigDiff(
+                        m=16,
+                        ef_construct=200,
+                        full_scan_threshold=10000,
+                    ),
+                ),
+            },
+            sparse_vectors_config={
+                "sparse": models.SparseVectorParams(
+                    modifier=models.Modifier.IDF
+                )
+            }
         )
         print(f"Коллекция {collection_name} создана")
     else:

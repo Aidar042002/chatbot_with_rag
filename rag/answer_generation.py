@@ -1,22 +1,17 @@
 from typing import List
-from gigachat import GigaChat
-from config.settings import GIGA_TOKEN
+import requests
 from models.document import Document
+from config.settings import LM_STUDIO_URL, MODEL
 
 
-def llm_init():
-    giga = GigaChat(credentials=GIGA_TOKEN, verify_ssl_certs=False)
-    return giga
-
-def generate_answer(query: str,  context_docs: List[Document]) -> str:
-    giga = llm_init()
+def generate_answer(query: str, context_docs: List[Document]) -> str:
 
     if not context_docs:
         return "Не нашел информации по вашему вопросу."
 
-    print(context_docs)
-
-    prompt = f"""Ты помощник по вопросам для абитуриентов. Ответь на вопрос, используя только контекст ниже.
+    prompt = f"""Ты помогаешь отвечать на вопросы абитуриентов. 
+Отвечай строго на основе предоставленного контекста. 
+Если информация отсутствует в контексте, скажи об этом честно.
 
 КОНТЕКСТ:
 {context_docs}
@@ -25,7 +20,17 @@ def generate_answer(query: str,  context_docs: List[Document]) -> str:
 
 ОТВЕТ:"""
 
-    response = giga.chat(prompt)
-    answer = response.choices[0].message.content
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.3
+    }
 
-    return f"{answer.replace('#', '').replace('*', '')}"
+    response = requests.post(LM_STUDIO_URL, json=payload)
+    response.raise_for_status()
+
+    answer = response.json()["choices"][0]["message"]["content"]
+
+    return answer.replace("#", "").replace("*", "").strip()

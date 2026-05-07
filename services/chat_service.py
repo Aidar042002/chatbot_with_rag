@@ -41,6 +41,8 @@ async def chat_loop():
 
             print(f"\nВопрос: {query}")
 
+            send_message(user_id, "Готовится ответ...", vk)
+
             answer = await rag_pipeline(str(query))
 
             send_message(user_id, answer, vk)

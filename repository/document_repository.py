@@ -1,8 +1,8 @@
-from qdrant_client.models import PointStruct
 from models.document import Document
 from rag.embedding import embedding_service
 import uuid
 from infrastructure.qdrant_storage import initialize_client
+from qdrant_client import models
 
 class DocumentRepository:
     @staticmethod
@@ -19,37 +19,51 @@ class DocumentRepository:
         client.upsert(
             collection_name=collection_name,
             points=[
-                PointStruct(
+                models.PointStruct(
                     id=doc.id,
-                    vector=vector,
-                    payload={
-                        "text": doc.text,
-                    }
+                    vector={
+                        "dense": vector,
+                        "sparse": models.Document(
+                            text=doc.text,
+                            model="Qdrant/bm25",
+                        ),
+                    },
+                    payload={"text": doc.text},
                 )
             ]
         )
 
         return doc
 
+
     @staticmethod
-    async def find_similar_by_text(query_text: str, limit: int = 5) -> list[Document]:
+    async def find_similar_by_text(query_text: str, limit: int = 10) -> list[Document]:
         client, collection_name = initialize_client()
 
-        query_vector = embedding_service.encode(query_text)
+        dense_vector = embedding_service.encode(query_text)
 
         results = client.query_points(
             collection_name=collection_name,
-            query=query_vector,
-            limit=limit
+            prefetch=[
+                models.Prefetch(
+                    query=models.Document(
+                        text=query_text,
+                        model="Qdrant/bm25",
+                    ),
+                    using="sparse",
+                    limit=limit,
+                ),
+                models.Prefetch(
+                    query=dense_vector,
+                    using="dense",
+                    limit=limit,
+                )
+            ],
+            query=models.FusionQuery(fusion=models.Fusion.DBSF),
+            limit=limit,
         )
 
-        documents = []
-        for hit in results.points:
-            doc = Document(
-                id=hit.id,
-                text=hit.payload["text"],
-                content=hit.vector if hasattr(hit, 'vector') else None,
-            )
-            documents.append(doc)
-
-        return documents
+        return [
+            Document(id=hit.id, text=hit.payload["text"], content=None)
+            for hit in results.points
+        ]
