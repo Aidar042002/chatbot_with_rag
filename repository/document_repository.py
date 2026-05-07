@@ -13,18 +13,17 @@ class DocumentRepository:
         if vector is None and doc.text:
             vector = embedding_service.encode(doc.text)
 
-        if not doc.qdrant_id:
-            doc.qdrant_id = str(uuid.uuid4())
+        if not doc.id:
+            doc.id = str(uuid.uuid4())
 
         client.upsert(
             collection_name=collection_name,
             points=[
                 PointStruct(
-                    id=doc.qdrant_id,
+                    id=doc.id,
                     vector=vector,
                     payload={
                         "text": doc.text,
-                        "pg_id": doc.pg_id
                     }
                 )
             ]
@@ -47,8 +46,7 @@ class DocumentRepository:
         documents = []
         for hit in results.points:
             doc = Document(
-                qdrant_id=hit.id,
-                pg_id=hit.payload.get("pg_id"),
+                id=hit.id,
                 text=hit.payload["text"],
                 content=hit.vector if hasattr(hit, 'vector') else None,
             )

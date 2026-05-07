@@ -35,8 +35,8 @@ async def create_data():
         return None
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=300,
-        chunk_overlap=50
+        chunk_size=1000,
+        chunk_overlap=200
     )
     chunks = splitter.split_documents(docs)
     print(f"Создано {len(chunks)} фрагментов")
@@ -45,8 +45,7 @@ async def create_data():
 
     for i, chunk in enumerate(chunks):
         doc1 = Document(
-            pg_id=None,
-            qdrant_id=None,
+            id=None,
             text=chunk.page_content,
             metadata={"source": chunk.metadata.get("source", "unknown")}
         )
