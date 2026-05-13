@@ -21,6 +21,14 @@ async def rerank_documents(query: str, docs: List[Document], top_n: int = 3) -> 
 
     ranked = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)
 
-    top_docs = [doc for doc, _ in ranked[:top_n]]
+    top_docs = []
+    for doc, score in ranked[:top_n]:
+        doc.metadata = doc.metadata or {}
+        doc.metadata["score"] = float(score)
+        top_docs.append(doc)
+
+    print("\nПосле rerank:")
+    for i, (doc, score) in enumerate(ranked[:top_n], 1):
+        print(f"{i}. ID={doc.id} | score={score:.4f} | {doc.source} |{doc.text[:100]}")
 
     return top_docs

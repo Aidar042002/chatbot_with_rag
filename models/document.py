@@ -7,3 +7,4 @@ class Document:
     text: str = ""
     content: Optional[List[float]] = None
     metadata: Optional[Dict[str, Any]] = None
+    source: Optional[str] = None

@@ -14,8 +14,4 @@ class EmbeddingService:
         embedding = self.model.encode(text)
         return embedding.tolist()
 
-    def encode_batch(self, texts: List[str]) -> List[List[float]]:
-        embeddings = self.model.encode(texts)
-        return embeddings.tolist()
-
 embedding_service = EmbeddingService()
