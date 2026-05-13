@@ -16,6 +16,10 @@ class DocumentRepository:
         if not doc.id:
             doc.id = str(uuid.uuid4())
 
+        payload = {"text": doc.text}
+        if doc.source:
+            payload["source"] = doc.source
+
         client.upsert(
             collection_name=collection_name,
             points=[
@@ -28,7 +32,7 @@ class DocumentRepository:
                             model="Qdrant/bm25",
                         ),
                     },
-                    payload={"text": doc.text},
+                    payload=payload,
                 )
             ]
         )
@@ -64,6 +68,6 @@ class DocumentRepository:
         )
 
         return [
-            Document(id=hit.id, text=hit.payload["text"], content=None)
+            Document(id=str(hit.id), text=hit.payload["text"], content=None, source=hit.payload.get("source"))
             for hit in results.points
         ]

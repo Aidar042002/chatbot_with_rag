@@ -5,3 +5,5 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+testing/results.csv
+testing/test_dataset.json
