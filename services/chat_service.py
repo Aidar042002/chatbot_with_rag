@@ -51,6 +51,11 @@ def send_snackbar_text(user_id: int, vk, is_admin_user: bool, is_authenticated: 
 
     vk.messages.send(user_id=user_id, message=message, random_id=random.randint(1, 999999))
 
+def check_password(query):
+    if query == ADMIN_PASSWORD:
+        return True
+    else:
+        return False
 
 async def chat_loop():
     await init_data()
@@ -88,7 +93,7 @@ async def chat_loop():
             send_message(user_id, "Готовится ответ...", vk, keyboard=get_keyboard())
 
             if is_admin_user and not is_admin_mode:
-                if query == ADMIN_PASSWORD:
+                if check_password(query):
                     admin_sessions[user_id] = True
                     send_message(user_id, "Пароль принят! Вы вошли в режим администратора.", vk,
                                  keyboard=get_keyboard())
@@ -128,14 +133,6 @@ async def chat_loop():
                 if query == "1":
                     send_message(user_id, "Переход в режим загрузки файлов pdf...", vk, keyboard=get_keyboard())
                     await handle_admin_load_file(user_id, vk, longpoll, get_keyboard())
-                    send_message(user_id,
-                                 "Вы в режиме администратора.\n"
-                                 "Вы можете сохранить данные в базу знаний. Наберите цифру для нужного вам действия:\n"
-                                 "1 - загрузка файла pdf\n"
-                                 "2 - загрузка файла markdown\n"
-                                 "3 - загрузка текста\n"
-                                 " Для выхода напишите 'выйти'",
-                                 vk, keyboard=get_keyboard())
                     continue
                 elif query == "2":
                     send_message(user_id, "Переход в режим загрузки файлов markdown...", vk, keyboard=get_keyboard())

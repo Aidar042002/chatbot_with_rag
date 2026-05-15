@@ -11,7 +11,7 @@ def init_cross_encoder():
         print("Reranker загружен")
     return _reranker
 
-async def rerank_documents(query: str, docs: List[Document], top_n: int = 3) -> List[Document]:
+async def rerank_documents(query: str, docs: List[Document], top_n: int = 5) -> List[Document]:
     global _reranker
     if not docs:
         return []
