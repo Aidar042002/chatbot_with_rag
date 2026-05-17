@@ -47,7 +47,7 @@ async def create_data():
         doc1 = Document(
             id=None,
             text=chunk.page_content,
-            metadata={"source": chunk.metadata.get("source", "unknown")}
+            metadata={"source": chunk.metadata.get("source")}
         )
 
         created = await qdrant_repo.create(doc1)
@@ -56,7 +56,7 @@ async def create_data():
     print(f"Всего сохранено {len(chunks)} фрагментов в Qdrant")
 
 
-async def load_one_file(file_path: str, source: Optional[str] = None):
+async def load_one_file(file_path: str, document_name: str, source: Optional[str] = None):
     print(f"Загрузка файла: {file_path}")
 
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -77,8 +77,7 @@ async def load_one_file(file_path: str, source: Optional[str] = None):
         doc1 = Document(
             id=None,
             text=chunk.page_content,
-            metadata={"source": chunk.metadata.get("source", "unknown")},
-            source=source
+            metadata={"source": source, "document_name": document_name}
         )
         await qdrant_repo.create(doc1)
 

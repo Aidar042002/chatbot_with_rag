@@ -7,7 +7,9 @@ from config.settings import VK_TOKEN, ADMIN_PASSWORD, ADMIN_NAME
 from rag.pipeline import rag_pipeline
 from rag.reranker import init_cross_encoder
 from infrastructure.qdrant_storage import init_qdrant
-from services.admin_service import handle_admin_load_file, handle_admin_save_markdown_text, handle_admin_load_markdown
+from repository.document_repository import DocumentRepository
+from services.admin_service import handle_admin_load_file, handle_admin_save_markdown_text, handle_admin_load_markdown, \
+    get_documents_with_names, delete_documents_with_names
 
 user_histories = {}
 admin_sessions = {}
@@ -43,6 +45,8 @@ def send_snackbar_text(user_id: int, vk, is_admin_user: bool, is_authenticated: 
                        "1 - загрузка файла pdf\n"
                        "2 - загрузка файла markdown\n"
                        "3 - загрузка текста\n"
+                       "4 - список имен документов\n"
+                       "5 <имя документа> - удалит документ по имени\n"
                        " Для выхода напишите 'выйти'")
         else:
             message = "Вы админ. Введите пароль для входа в режим администратора"
@@ -104,6 +108,8 @@ async def chat_loop():
                         "1 - загрузка файла pdf\n"
                         "2 - загрузка файла markdown\n"
                         "3 - загрузка текста\n"
+                        "4 - список имен документов\n"
+                        "5 <имя документа> - удалит документ по имени\n"
                         " Для выхода напишите 'выйти'",
                     vk, keyboard=get_keyboard())
                 else:
@@ -142,12 +148,32 @@ async def chat_loop():
                     send_message(user_id, "Переход в режим загрузки текста...", vk, keyboard=get_keyboard())
                     await handle_admin_save_markdown_text(user_id, vk, longpoll, get_keyboard())
                     continue
+                elif query == "4":
+                    send_message(user_id, "Список загруженных документов:", vk, keyboard=get_keyboard())
+                    result = await get_documents_with_names()
+                    send_message(user_id, result, vk, keyboard=get_keyboard())
+                    continue
+                elif query.startswith("5 "):
+                    document_name = query[2:].strip()
+
+                    if not document_name:
+                        send_message(user_id,"Укажите имя документа: 5 <имя>",vk,keyboard=get_keyboard())
+                        continue
+
+                    send_message(user_id,"Удаление документа...",vk, keyboard=get_keyboard())
+
+                    result = await DocumentRepository.delete_by_document_name(document_name)
+
+                    send_message(user_id, result,vk,keyboard=get_keyboard())
+                    continue
                 else:
                     send_message(user_id, f"Неизвестная админ-команда: {query}\n"
                                           "Доступные команды:\n"
                                  "1 - загрузка файла pdf\n"
                                  "2 - загрузка файла markdown\n"
                                  "3 - загрузка текста\n"
+                                 "4 - список имен документов\n"
+                                 "5 <имя документа> - удалит документ по имени\n"
                                  " Для выхода напишите 'выйти'",
                                  vk, keyboard=get_keyboard())
                 continue

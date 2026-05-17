@@ -16,9 +16,11 @@ class DocumentRepository:
         if not doc.id:
             doc.id = str(uuid.uuid4())
 
-        payload = {"text": doc.text}
-        if doc.source:
-            payload["source"] = doc.source
+        payload = {
+            "text": doc.text,
+            "source": doc.metadata.get("source"),
+            "document_name": doc.metadata.get("document_name")
+        }
 
         client.upsert(
             collection_name=collection_name,
@@ -68,6 +70,67 @@ class DocumentRepository:
         )
 
         return [
-            Document(id=str(hit.id), text=hit.payload["text"], content=None, source=hit.payload.get("source"))
+            Document(id=str(hit.id), text=hit.payload["text"], content=None, metadata={"source": hit.payload.get("source")})
             for hit in results.points
         ]
+
+    @staticmethod
+    async def get_all_document_names() -> list[str]:
+        client, collection_name = initialize_client()
+
+        try:
+            result = client.scroll(
+                collection_name=collection_name,
+                with_payload=True,
+                with_vectors=False,
+                limit=10000
+            )
+
+            points = result[0]
+
+            document_names = set()
+
+            for point in points:
+                payload = point.payload or {}
+
+                document_name = payload.get("document_name")
+
+                if document_name:
+                    document_names.add(document_name)
+
+            return sorted(list(document_names))
+
+        except Exception as e:
+            print(f"Ошибка получения списка документов: {e}")
+            return []
+
+    @staticmethod
+    async def delete_by_document_name(document_name: str) -> str:
+        try:
+            client, collection_name = initialize_client()
+
+            if not document_name or not document_name.strip():
+                return "Ошибка удаления: пустое имя файла"
+
+            document_name = document_name.strip()
+
+            client.delete(
+                collection_name=collection_name,
+                points_selector=models.FilterSelector(
+                    filter=models.Filter(
+                        must=[
+                            models.FieldCondition(
+                                key="document_name",
+                                match=models.MatchValue(value=document_name)
+                            )
+                        ]
+                    )
+                )
+            )
+
+            print(f"Удалён документ: {document_name}")
+            return f"Удалён документ: {document_name}"
+
+        except Exception as e:
+            print(f"Ошибка удаления: {e}")
+            return "Ошибка удаления"

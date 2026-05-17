@@ -29,6 +29,6 @@ async def rerank_documents(query: str, docs: List[Document], top_n: int = 5) -> 
 
     print("\nПосле rerank:")
     for i, (doc, score) in enumerate(ranked[:top_n], 1):
-        print(f"{i}. ID={doc.id} | score={score:.4f} | {doc.source} |{doc.text[:100]}")
+        print(f"{i}. ID={doc.id} | score={score:.4f} | {doc.metadata.get("source")} |{doc.text[:100]}")
 
     return top_docs
